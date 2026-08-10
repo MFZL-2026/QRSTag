@@ -417,7 +417,7 @@
             <!-- Contact Buttons -->
             <div class="grid grid-cols-3 gap-3 mb-4">
               ${car.contactPhone ? `<a href="tel:${car.contactPhone}" class="flex flex-col items-center gap-1 p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition"><span class="text-blue-600 text-xl">📞</span><span class="font-medium text-blue-700 text-sm">Call</span></a>` : ''}
-              ${car.contactWhatsApp ? `<a href="https://wa.me/${car.contactWhatsApp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in your ${car.year} ${car.make} ${car.model}`)}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1 p-3 bg-green-50 hover:bg-green-100 rounded-xl transition"><span class="text-green-600 text-xl">💬</span><span class="font-medium text-green-700 text-sm">WhatsApp</span></a>` : ''}
+              ${car.contact_whatsapp ? `<a href="https://wa.me/${car.contact_whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I'm interested in your ${car.year} ${car.make} ${car.model}`)}" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center gap-1 p-3 bg-green-50 hover:bg-green-100 rounded-xl transition"><span class="text-green-600 text-xl">💬</span><span class="font-medium text-green-700 text-sm">WhatsApp</span></a>` : ''}
               ${car.contactEmail ? `<a href="mailto:${car.contactEmail}?subject=Inquiry about ${car.year} ${car.make} ${car.model}" class="flex flex-col items-center gap-1 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition"><span class="text-gray-600 text-xl">✉️</span><span class="font-medium text-gray-700 text-sm">Email</span></a>` : ''}
             </div>
 
