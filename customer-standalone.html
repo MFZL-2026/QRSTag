@@ -29,15 +29,15 @@
     const SUPABASE_URL = 'https://uifcfnkbccluhyryywxe.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpZmNmbmtiY2NsdWh5cnl5d3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDk4ODMsImV4cCI6MjA5Mjg4NTg4M30.c0jZTMmLCW5kNqyWyufHMzObs1pUYskSw1w4VrWTVdU';
 
-    // QR Templates
+    // QR Templates - Matched with main app QR_TEMPLATES
     const qrTemplates = [
-      { id: 'default', name: 'Classic', fgColor: '#000000', bgColor: '#ffffff' },
-      { id: 'gradient-blue', name: 'Gradient Blue', gradient: ['#667eea', '#764ba2'] },
-      { id: 'gradient-green', name: 'Nature Green', gradient: ['#11998e', '#38ef7d'] },
-      { id: 'warm-orange', name: 'Warm Orange', gradient: ['#f12711', '#f5af19'] },
-      { id: 'elegant-dark', name: 'Elegant Dark', fgColor: '#ffffff', bgColor: '#1a1a2e' },
-      { id: 'sunset-pink', name: 'Sunset Pink', gradient: ['#ee0979', '#ff6a00'] },
-      { id: 'ocean-blue', name: 'Ocean Blue', gradient: ['#1e3c72', '#2a5298'] },
+      { id: 'standard', name: 'Standard', fgColor: '#000000', bgColor: '#ffffff', borderColor: '#333333' },
+      { id: 'luxury', name: 'Luxury', fgColor: '#d4af37', bgColor: '#1a1a2e', borderColor: '#d4af37' },
+      { id: 'classic', name: 'Classic', fgColor: '#1a1a1a', bgColor: '#f5f5dc', borderColor: '#8b7355' },
+      { id: 'bold', name: 'Bold', fgColor: '#ffffff', bgColor: '#dc2626', borderColor: '#991b1b' },
+      { id: 'minimalist', name: 'Minimalist', fgColor: '#000000', bgColor: '#ffffff', borderColor: '#e5e7eb' },
+      { id: 'sports', name: 'Sports', fgColor: '#ffffff', bgColor: '#0f172a', borderColor: '#22c55e' },
+      { id: 'eco', name: 'Eco', fgColor: '#ffffff', bgColor: '#16a34a', borderColor: '#15803d' },
     ];
 
     // State
@@ -194,12 +194,41 @@
 
     // Get template colors
     function getTemplateColors() {
-      const templateId = state.car?.qr_template || 'default';
+      const templateId = state.car?.qr_template || 'standard';
       const template = qrTemplates.find(t => t.id === templateId) || qrTemplates[0];
-      if (template.gradient) {
-        return { fg: '#ffffff', bg: template.gradient[0] };
-      }
-      return { fg: template.fgColor || '#000000', bg: template.bgColor || '#ffffff' };
+      return {
+        fg: template.fgColor || '#000000',
+        bg: template.bgColor || '#ffffff',
+        border: template.borderColor || '#333333'
+      };
+    }
+
+    // QR Shape configurations
+    const qrShapes = {
+      'square': '0px',
+      'rounded_xs': '4px',
+      'rounded_sm': '8px',
+      'rounded_md': '16px',
+      'rounded_lg': '24px',
+      'rounded_xl': '32px',
+      'pill': '64px',
+      'circle': '50%',
+      'circle_md': '40%',
+      'octagon': '10px',
+      'hexagon': '12px',
+      'diamond': '4px'
+    };
+
+    // Get QR shape border radius
+    function getQRShapeRadius() {
+      const shapeId = state.car?.qr_shape || 'square';
+      return qrShapes[shapeId] || '0px';
+    }
+
+    // Check if shape has enhanced scannability (higher error correction needed)
+    function hasEnhancedScannability() {
+      const shapeId = state.car?.qr_shape || 'square';
+      return ['circle', 'pill', 'rounded_xl'].includes(shapeId);
     }
 
     // Check if QR is active
@@ -232,6 +261,9 @@
       if (!qrContainer || !state.car) return;
 
       const colors = getTemplateColors();
+      const shapeRadius = getQRShapeRadius();
+      const isEnhancedScannable = hasEnhancedScannability();
+
       // Use custom QR URL if set, otherwise use current page URL
       let baseUrl;
       if (state.customQrUrl) {
@@ -243,16 +275,34 @@
       const qrUrl = `${baseUrl}customer-standalone.html?car=${state.car.id}`;
 
       qrContainer.innerHTML = '';
+
+      // QRCode options with error correction level
+      // Higher error correction for shapes with cut-off corners (circle, pill, etc.)
+      const errorCorrectionLevel = isEnhancedScannable ? QRCode.CorrectLevel.M : QRCode.CorrectLevel.L;
+
       QRCode.toCanvas(qrUrl, {
         width: 200,
         margin: 2,
+        errorCorrectionLevel: errorCorrectionLevel,
         color: {
           dark: colors.fg,
-          light: '#ffffff'
+          light: colors.bg
         }
       }, (error, canvas) => {
         if (error) console.error(error);
-        else qrContainer.appendChild(canvas);
+        else {
+          // Apply shape border radius
+          canvas.style.borderRadius = shapeRadius;
+          canvas.style.overflow = 'hidden';
+          qrContainer.appendChild(canvas);
+
+          // Apply border styling
+          qrContainer.style.border = `2px solid ${colors.border}`;
+          qrContainer.style.borderRadius = shapeRadius;
+          qrContainer.style.padding = '8px';
+          qrContainer.style.backgroundColor = colors.bg;
+          qrContainer.style.display = 'inline-block';
+        }
       });
     }
 
