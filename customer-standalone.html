@@ -40,7 +40,7 @@
       { id: 'eco', name: 'Eco', fgColor: '#ffffff', bgColor: '#16a34a', borderColor: '#15803d' },
     ];
 
-    // State
+    // State - Default values that match database settings
     let state = {
       loading: true,
       error: null,
@@ -50,8 +50,8 @@
       currentImage: 0,
       showLeadForm: false,
       leadSaved: false,
-      appName: 'Car Showcase',
-      customQrUrl: '',
+      appName: 'QRSTag',  // Default app name - loaded from database
+      customQrUrl: 'https://mfzl-2026.github.io/QRSTag',  // Default QR URL - loaded from database
       saving: false,
       leadForm: { name: '', phone: '', email: '', interest_level: 'normal', notes: '' }
     };
@@ -153,32 +153,52 @@
         if (!sessionStorage.getItem(scanKey)) {
           sessionStorage.setItem(scanKey, 'true');
           const newScanCount = (carData.scan_count || 0) + 1;
-          // Fire and forget - don't await to speed up page load
+          const scanId = generateId();
+          const scanTime = new Date().toISOString();
+
+          // Record scan in scan_records table
           fetch(`${SUPABASE_URL}/rest/v1/scan_records`, {
             method: 'POST',
             headers: {
               'apikey': SUPABASE_KEY,
               'Authorization': `Bearer ${SUPABASE_KEY}`,
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
             },
             body: JSON.stringify({
-              id: generateId(),
+              id: scanId,
               car_id: carId,
-              scanned_at: new Date().toISOString()
+              scanned_at: scanTime
             })
           }).then(res => {
-            if (!res.ok) console.error('Error recording scan');
-            else console.log('Scan recorded for car:', carId);
+            if (res.ok) {
+              console.log('Scan recorded:', scanId, 'for car:', carId);
+            } else {
+              console.error('Failed to record scan:', res.status);
+            }
+          }).catch(err => {
+            console.error('Scan record error:', err);
           });
-          // Update scan count asynchronously
+
+          // Update scan count on car record
           fetch(`${SUPABASE_URL}/rest/v1/cars?id=eq.${carId}`, {
             method: 'PATCH',
             headers: {
               'apikey': SUPABASE_KEY,
               'Authorization': `Bearer ${SUPABASE_KEY}`,
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
             },
-            body: JSON.stringify({ scan_count: newScanCount })
+            body: JSON.stringify({
+              scan_count: newScanCount,
+              last_scanned_at: scanTime
+            })
+          }).then(res => {
+            if (res.ok) {
+              console.log('Scan count updated to:', newScanCount);
+            }
+          }).catch(err => {
+            console.error('Scan count update error:', err);
           });
         }
 
